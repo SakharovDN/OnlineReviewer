@@ -1,14 +1,18 @@
-﻿using System;
+﻿using OnlineReviewer.Models;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
+using Word = Microsoft.Office.Interop.Word;
 
 namespace OnlineReviewer.Controllers
 {
     public class HomeController : Controller
     {
+        private Word.Application wordApp;
+        private Word.Document wordDoc;
         public ActionResult Index()
         {
             return View();
@@ -17,12 +21,16 @@ namespace OnlineReviewer.Controllers
         [HttpPost]
         public ActionResult Index(HttpPostedFileBase file)
         {
+            wordApp = new Word.Application();
             if (file != null && file.ContentLength > 0)
                 try
                 {
                     string path = Path.Combine(Server.MapPath("~/App_Data/Uploads"),
                                                Path.GetFileName(file.FileName));
                     file.SaveAs(path);
+                    wordDoc = WorkDocument.OpenDoc(path, wordApp, wordDoc);
+                    WorkDocument.CorrectDoc(wordDoc);
+                    WorkDocument.SaveDoc(wordApp);
                     path = "~/App_Data/Uploads/" + file.FileName;
                     ViewBag.Message = "File uploaded successfully";
                     ViewBag.pathFile = path;
