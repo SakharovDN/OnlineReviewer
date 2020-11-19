@@ -1,7 +1,10 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Web;
+using System.Web.Hosting;
 using Word = Microsoft.Office.Interop.Word;
 
 namespace OnlineReviewer.Models
@@ -9,50 +12,78 @@ namespace OnlineReviewer.Models
     public static class WorkDocument
     {
 
-        public static Word.Document OpenDoc(string pathFile, Word.Application wordapp, Word.Document worddocument)
+        /// <summary>
+        /// Открывает и возвращает документ Word
+        /// </summary>
+        /// <param name="pathFile">Путь до файла</param>
+        /// <param name="app"></param>
+        /// <returns></returns>
+        public static Word.Document OpenDoc(string pathFile, Word.Application app)
         {
-            wordapp.Visible = true;
-            Object filename = pathFile;
-            Object confirmConversions = true;
-            Object readOnly = false;
-            Object addToRecentFiles = true;
-            Object passwordDocument = Type.Missing;
-            Object passwordTemplate = Type.Missing;
-            Object revert = false;
-            Object writePasswordDocument = Type.Missing;
-            Object writePasswordTemplate = Type.Missing;
-            Object format = Type.Missing;
-            Object encoding = Type.Missing;
-            Object oVisible = Type.Missing;
-            Object openConflictDocument = Type.Missing;
-            Object openAndRepair = Type.Missing;
-            Object documentDirection = Type.Missing;
-            Object noEncodingDialog = false;
-            Object xmlTransform = Type.Missing;
-            worddocument = wordapp.Documents.Open(ref filename,
-                ref confirmConversions, ref readOnly, ref addToRecentFiles,
-                ref passwordDocument, ref passwordTemplate, ref revert,
-                ref writePasswordDocument, ref writePasswordTemplate,
-                ref format, ref encoding, ref oVisible, ref openAndRepair,
-                ref documentDirection, ref noEncodingDialog, ref xmlTransform);
-            return worddocument;
+            app.Visible = true;
+            Object fileName = pathFile;
+            Word.Document doc = app.Documents.Open(ref fileName);
+            return doc;
         }
-        public static void CorrectDoc(Word.Document worddocument)
+
+        /// <summary>
+        /// Метод, который ищет ошибки в документе
+        /// </summary>
+        /// <param name="doc">Документ, в котором ищутся ошибки</param>
+        public static void CorrectDoc(Word.Document doc)
         {
-            Object begin = 0;
-            Object end = 5;
-            Word.Range wordrange = worddocument.Range(ref begin, ref end);
-            wordrange.Select();
-            wordrange.Comments.Add(wordrange, "Комментарий оставлен");
+            var dictionary = InitializeDictionary();
+
+            //Проходимся циклом по всем словам в словаре
+            foreach(var wrongWord in dictionary)
+            {
+                Object findText = wrongWord.Key;
+                //Проходимся циклом по все параграфам в документе
+                foreach (Word.Paragraph paragraph in doc.Paragraphs)
+                {
+                    //Заносим параграф в область range
+                    Word.Range range = paragraph.Range;
+                    //Выделяем range
+                    range.Select();
+                    //Если range является ячейкой в таблице, переходим к следующему параграфу
+                    if (doc.ActiveWindow.Selection.get_Information(Word.WdInformation.wdEndOfRangeColumnNumber).ToString() != "-1")
+                        continue;
+                    //Если в range найдено слово, range переопределяется, как текст от конца найденного слова до конца параграфа
+                    for (Object start = paragraph.Range.Start; ; start = range.End)
+                    {
+                        range = doc.Range(ref start, paragraph.Range.End);
+                        range.Find.ClearFormatting();
+
+                        if (range.Find.Execute(ref findText))
+                        {
+                            // выделяем найденной слово
+                            range.Select();
+                            // пишем примечание
+                            range.Comments.Add(range, wrongWord.Value);
+                        }
+                        else
+                            break;
+                    }
+                }
+            }
         }
+
+        /// <summary>
+        /// Метод, который закрывает документ, сохраняя все изменения
+        /// </summary>
+        /// <param name="wordapp"></param>
         public static void SaveDoc(Word.Application wordapp)
         {
-            Object saveChanges = Word.WdSaveOptions.wdPromptToSaveChanges;
-            Object originalFormat = Word.WdOriginalFormat.wdWordDocument;
-            Object routeDocument = Type.Missing;
-            wordapp.Quit(ref saveChanges,
-                         ref originalFormat, ref routeDocument);
-            wordapp = null;
+            Object saveChanges = Word.WdSaveOptions.wdSaveChanges;
+            Object originalFormat = Word.WdOriginalFormat.wdOriginalDocumentFormat;
+            wordapp.Quit(ref saveChanges, ref originalFormat);
+        }
+
+        private static Dictionary<string,string> InitializeDictionary()
+        {
+            string dictionaryContent = File.ReadAllText(HostingEnvironment.MapPath("~/App_Data/dictionary.json"));
+            Dictionary<string, string> dictionary = JsonConvert.DeserializeObject<Dictionary<string, string>>(dictionaryContent);
+            return dictionary;
         }
     }
 }
