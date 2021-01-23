@@ -25,14 +25,15 @@ namespace OnlineReviewer.Controllers
             Word.Document doc;
             try
             {
-                FileIsValid(file);
+                WordDocument.DeleteOldDocuments();
+                WordDocument.FileIsValid(file);
                 //Загружаем файл на сервер
                 string pathFile = Server.MapPath("~/App_Data/Uploads/") + file.FileName;
-                file.SaveAs(pathFile);
-                
+                WordDocument.Upload(file, pathFile);
                 doc = WordDocument.Open(pathFile, app);
                 WordDocument.Review(doc);
                 WordDocument.Quit(app);
+
                 //Объекты, которые передаются в Home/Index.cshtml
                 //Сообщение об успешной загрузке и рецензировании документа
                 ViewBag.Message = "Файл успешно загружен";
@@ -40,6 +41,7 @@ namespace OnlineReviewer.Controllers
                 ViewBag.FileName = file.FileName;
                 //Рецензированный файл на сервере существует и рецензирован без ошибки
                 ViewBag.FileExists = true;
+                ViewBag.MistakesNumber = WordDocument.MistakesNumber;
             }
             catch(Exception ex)
             {
@@ -51,6 +53,7 @@ namespace OnlineReviewer.Controllers
             }
             return View("Index");
         }
+
         /// <summary>
         /// Метод отправляющий файл из сервера к клиенту
         /// </summary>
@@ -62,26 +65,6 @@ namespace OnlineReviewer.Controllers
             string contentType = "application/docx";
             string fileDownloadName = "reviewed" + fileName;
             return File(pathFile, contentType, fileDownloadName);
-        }
-        /// <summary>
-        /// Метод, который проверяет файл на соответствие ограничениям (размер файла, расширение)
-        /// </summary>
-        /// <param name="file"></param>
-        private void FileIsValid(HttpPostedFileBase file)
-        {
-            if (file == null || file.ContentLength == 0)
-            {
-                throw new ArgumentException("Файл не выбран");
-            }
-            string extension = Path.GetExtension(file.FileName);
-            if (extension != ".docx" && extension != ".doc")
-            {
-                throw new ArgumentException("Расширение файла должно быть .docx или .doc");
-            }
-            if (file.ContentLength > 1e7)
-            {
-                throw new ArgumentException("Файл слишком большой");
-            }
         }
 
         public ActionResult About()
