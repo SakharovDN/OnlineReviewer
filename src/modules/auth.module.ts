@@ -6,14 +6,15 @@ import { Token } from 'src/models/token.model';
 import { User } from 'src/models/user.model';
 import { AuthService } from 'src/services/auth.service';
 import { MailModule } from './mail.module';
-// import { TokenModule } from './token.module';
+import { TokenModule } from './token.module';
 
 @Module({
   controllers: [AuthController],
   providers: [AuthService],
   imports: [
     TypeOrmModule.forFeature([User, Token, ResetPasswordSession]),
-    MailModule
+    MailModule,
+    TokenModule
   ]
 })
 export class AuthModule {}

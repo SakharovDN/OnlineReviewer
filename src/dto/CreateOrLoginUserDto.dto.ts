@@ -1,7 +1,7 @@
 import { IsEmail, IsNotEmpty, IsString, Length } from "class-validator";
 import { Transform, TransformFnParams } from "class-transformer";
 
-export class CreateUserDto {
+export class CreateOrLoginUserDto {
 
     @IsNotEmpty()
     @IsString()

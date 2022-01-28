@@ -3,8 +3,9 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { User } from "src/models/user.model";
 import { Repository } from "typeorm";
 import * as bcrypt from 'bcrypt';
-import { CreateUserDto } from "src/dto/CreateUserDto.dto";
 import { MailService } from "./mail.service";
+import { CreateOrLoginUserDto } from "src/dto/CreateOrLoginUserDto.dto";
+import { TokenService } from "./token.service";
 
 
 @Injectable()
@@ -12,7 +13,7 @@ export class AuthService {
     constructor(
         // @InjectRepository(ResetPasswordSession) private resetSessionRepository: Repository<ResetPasswordSession>,
         @InjectRepository(User) private userRepository: Repository<User>,
-        // private tokenService: TokenService,
+        private tokenService: TokenService,
         private mailService: MailService
     ) {}
 
@@ -38,28 +39,28 @@ export class AuthService {
         return;
     }
 
-    // async Login(dto: LoginUserDto, response): Promise<ResponseLogin> {
-    //     let user = await this.userRepository.findOne({ where: { email: dto.email }});
-    //     if(!user || !bcrypt.compareSync(dto.password, user.password))
-    //         throw new NotFoundException("Incorrect login or password");
-    //     if(user.verified == false)
-    //         throw new ForbiddenException("Account is not verified");
+    async Login(dto: CreateOrLoginUserDto, response): Promise<any> {
+        let user = await this.userRepository.findOne({ where: { email: dto.email }});
+        if(!user || !bcrypt.compareSync(dto.password, user.password))
+            throw new NotFoundException("Incorrect login or password");
+        if(!user.verified)
+            throw new ForbiddenException("Account is not verified");
 
-    //     user = { ...user };
-    //     delete user.password;
-    //     delete user.verified;
-    //     const payload = {
-    //         id: user.id,
-    //         email: user.email,
-    //     };
-    //     const RefreshToken = await this.tokenService.GenerateRefreshToken(payload);
-    //     const AccessToken = await this.tokenService.GenerateAccessToken(payload);
-    //     response.cookie("RefreshToken", RefreshToken, { httpOnly: true });
-    //     return {
-    //         AccessToken: AccessToken,
-    //         user: user
-    //     };
-    // }
+        user = { ...user };
+        delete user.password;
+        delete user.verified;
+        const payload = {
+            id: user.id,
+            email: user.email
+        };
+        const RefreshToken = await this.tokenService.GenerateRefreshToken(payload);
+        const AccessToken = await this.tokenService.GenerateAccessToken(payload);
+        response.cookie("RefreshToken", RefreshToken, { httpOnly: true });
+        return {
+            AccessToken: AccessToken,
+            user: payload
+        };
+    }
     
     // async UpdateAccessToken(user): Promise<ResponseUpdateToken> {
     //     const payload = {
@@ -70,9 +71,9 @@ export class AuthService {
     //     return { AccessToken: await this.tokenService.GenerateAccessToken(payload) };
     // }
 
-    // async Logout(request) {
-    //     this.tokenService.DestroyToken(request.user.id, request.cookies.RefreshToken);
-    // }
+    async Logout(request) {
+        this.tokenService.DestroyToken(request.user.id, request.cookies.RefreshToken);
+    }
 
     // async ResetPassword(dto: ResetPasswordDto) {
     //     const { id, email, verified } = { ...await this.userRepository.findOne({ email: dto.email }) };
