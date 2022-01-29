@@ -14,7 +14,7 @@ import { TokenModule } from './token.module';
   imports: [
     TypeOrmModule.forFeature([User, Token, ResetPasswordSession]),
     MailModule,
-    TokenModule
-  ]
+    TokenModule,
+  ],
 })
 export class AuthModule {}

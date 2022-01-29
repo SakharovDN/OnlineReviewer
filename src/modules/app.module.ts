@@ -14,9 +14,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       password: '1',
       database: 'online-reviewer',
       autoLoadEntities: true,
-      synchronize: true
+      synchronize: true,
     }),
-    AuthModule
-  ]
+    AuthModule,
+  ],
 })
 export class AppModule {}

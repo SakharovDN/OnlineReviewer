@@ -1,14 +1,13 @@
 import { PrimaryGeneratedColumn, Column, Entity } from 'typeorm';
 
-@Entity({name: 'words'})
+@Entity({ name: 'words' })
 export class Word {
+  @PrimaryGeneratedColumn()
+  id: number;
 
-    @PrimaryGeneratedColumn()
-    id: number
+  @Column({ unique: true })
+  value: string;
 
-    @Column({unique: true})
-    value: string
-
-    @Column({length: 500})
-    comment: string
+  @Column({ length: 500 })
+  comment: string;
 }

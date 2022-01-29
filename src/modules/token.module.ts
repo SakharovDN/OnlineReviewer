@@ -5,11 +5,8 @@ import { TokenService } from 'src/services/token.service';
 import { Token } from 'src/models/token.model';
 
 @Module({
-    providers: [TokenService],
-    exports: [TokenService],
-    imports: [
-        TypeOrmModule.forFeature([Token]),
-        JwtModule.register({}),
-    ],
+  providers: [TokenService],
+  exports: [TokenService],
+  imports: [TypeOrmModule.forFeature([Token]), JwtModule.register({})],
 })
 export class TokenModule {}
