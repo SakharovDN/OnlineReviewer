@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   UnprocessableEntityException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/models/user.model';
@@ -9,8 +10,8 @@ import { Repository } from 'typeorm';
 import { spawnSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
+import { TokenService } from './token.service';
 const zip = require('express-zip');
-
 
 @Injectable()
 export class ReviewService {
@@ -19,9 +20,10 @@ export class ReviewService {
 
   constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
+    private tokenService: TokenService,
   ) {}
 
-  async Review(dto, docs): Promise<any> {
+  async Review(dto, docs, auth): Promise<any> {
     if (
       (dto.useGlobalDictionary != 'true' &&
         dto.useGlobalDictionary != 'false') ||
@@ -29,8 +31,16 @@ export class ReviewService {
     ) {
       throw new BadRequestException('Value is not boolean');
     }
+    if (auth) {
+      // return " token yes"
+      const token = auth.split(' ')[1];
+      try {
+        var user = this.tokenService.GetUserByToken(token);
+      } catch {
+        throw new UnauthorizedException('You need authorization');
+      }
+    }
     // todo: достать userid для поиска своего словаря
-    const ownDictionaryPath = '';
 
     let reviewResult = [];
     let filenames: string[] = [];
@@ -41,7 +51,7 @@ export class ReviewService {
         path.resolve(`${this.UPLOADS_PATH}${doc.filename}`),
         dto.useGlobalDictionary,
         dto.useOwnDictionary,
-        ownDictionaryPath,
+        user ? user.id : '',
       ]);
 
       if (review.error || review.stderr.toString()) {

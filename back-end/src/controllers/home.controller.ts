@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   Post,
+  Req,
   Res,
   UploadedFiles,
   UseInterceptors,
@@ -17,8 +18,8 @@ export class HomeController {
 
   @Post('review')
   @UseInterceptors(FilesInterceptor('docs', 5, { dest: '../uploads' }))
-  Review(@UploadedFiles() docs, @Body() dto) {
-    return this.reviewService.Review(dto, docs);
+  Review(@Req() { headers }, @UploadedFiles() docs, @Body() dto) {
+    return this.reviewService.Review(dto, docs, headers.authorization);
   }
 
   @Get('getdocs/:filenames/:originalnames')

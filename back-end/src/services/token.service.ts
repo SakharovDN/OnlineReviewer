@@ -50,9 +50,7 @@ export class TokenService {
 
       if (bearer != 'Bearer' || !token) throw new Error();
 
-      const user = this.jwtService.verify(token, {
-        secret: ' process.env.ACCESS_TOKEN_SECRET',
-      });
+      const user = this.GetUserByToken(token);
       request.user = user;
       return true;
     } catch (e) {
@@ -76,6 +74,16 @@ export class TokenService {
       throw new Error();
     } catch (e) {
       throw new ForbiddenException('Invalid refresh token');
+    }
+  }
+
+  GetUserByToken(token) {
+    try {
+      return this.jwtService.verify(token, {
+        secret: ' process.env.ACCESS_TOKEN_SECRET',
+      });
+    } catch {
+      throw new Error();
     }
   }
 }
