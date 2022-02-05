@@ -1,8 +1,8 @@
 uploads
 
 # compiled output
-/dist
-/node_modules
+dist/
+console_reviewer/
 
 # Logs
 logs
