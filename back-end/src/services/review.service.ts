@@ -9,10 +9,12 @@ import { Repository } from 'typeorm';
 import { spawnSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
+const zip = require('express-zip');
+
 
 @Injectable()
 export class ReviewService {
-  readonly CONSOLE_REVIEWER_PATH = '../Reviewer/Reviewer';
+  readonly CONSOLE_REVIEWER_PATH = '../console_reviewer/Reviewer';
   readonly UPLOADS_PATH = '../uploads/';
 
   constructor(
@@ -66,7 +68,6 @@ export class ReviewService {
   }
 
   async GetDoc(dto, res) {
-    var zip = require('express-zip');
     let filenames = dto.filenames.split(',');
     let originalnames = dto.originalnames.split(',');
     let files = [];
@@ -81,6 +82,7 @@ export class ReviewService {
     res.zip(files, function (err) {
       if (err) res.status(404).json({ message: 'File not found!' });
       else {
+        // todo: сделать сервис для удаления файлов
         files.forEach((file) => {
           fs.unlink(file.path, () => {});
         });
