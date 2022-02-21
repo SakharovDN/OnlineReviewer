@@ -3,6 +3,7 @@ import { AuthModule } from './auth.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { HomeModule } from './home.module';
 import { UserModule } from './user.module';
+import { AdminModule } from './admin.module';
 
 @Module({
   controllers: [],
@@ -20,7 +21,8 @@ import { UserModule } from './user.module';
     }),
     AuthModule,
     HomeModule,
-    UserModule
+    UserModule,
+    AdminModule,
   ],
 })
 export class AppModule {}

@@ -5,10 +5,11 @@ import { User } from 'src/models/user.model';
 import { OwnWord } from 'src/models/own-word.model';
 import { UserController } from 'src/controllers/user.controller';
 import { UserService } from 'src/services/user.service';
+import { DictionaryService } from 'src/services/dictionary.service';
 
 @Module({
   controllers: [UserController],
-  providers: [UserService],
+  providers: [UserService, DictionaryService],
   imports: [
     TypeOrmModule.forFeature([User, OwnWord]),
     TokenModule,

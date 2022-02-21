@@ -5,12 +5,12 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from 'src/models/user.model';
 import { Repository } from 'typeorm';
 import { spawnSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import { TokenService } from './token.service';
+import { ReviewEvent } from 'src/models/review-event.model';
 const zip = require('express-zip');
 
 @Injectable()
@@ -19,7 +19,8 @@ export class ReviewService {
   readonly UPLOADS_PATH = '../uploads/';
 
   constructor(
-    @InjectRepository(User) private userRepository: Repository<User>,
+    @InjectRepository(ReviewEvent)
+    private reviewEventRepository: Repository<ReviewEvent>,
     private tokenService: TokenService,
   ) {}
 
@@ -32,15 +33,13 @@ export class ReviewService {
       throw new BadRequestException('Value is not boolean');
     }
     if (auth) {
-      // return " token yes"
       const token = auth.split(' ')[1];
       try {
-        var user = this.tokenService.GetUserByToken(token);
+        var user = this.tokenService.GetUserByAccessToken(token);
       } catch {
         throw new UnauthorizedException('You need authorization');
       }
     }
-    // todo: достать userid для поиска своего словаря
 
     let reviewResult = [];
     let filenames: string[] = [];
@@ -70,7 +69,7 @@ export class ReviewService {
       filenames.push(doc.filename);
       originalnames.push(doc.originalname);
     });
-
+    this.WriteReviewEvent(user.email);
     return {
       link: `localhost:3000/home/getdocs/${filenames}/${originalnames}`,
       reviewResult,
@@ -97,6 +96,13 @@ export class ReviewService {
           fs.unlink(file.path, () => {});
         });
       }
+    });
+  }
+
+  private async WriteReviewEvent(email) {
+    this.reviewEventRepository.save({
+      email: email,
+      timestamp: new Date(),
     });
   }
 }

@@ -1,8 +1,14 @@
-import { PrimaryGeneratedColumn, Column, Entity, ManyToOne, Unique } from 'typeorm';
+import {
+  PrimaryGeneratedColumn,
+  Column,
+  Entity,
+  ManyToOne,
+  Unique,
+} from 'typeorm';
 import { User } from './user.model';
 
 @Entity({ name: 'own_words' })
-@Unique('WordExistsException', ['value', 'user'])
+@Unique('OwnWordExistsException', ['value', 'user'])
 export class OwnWord {
   @PrimaryGeneratedColumn()
   id: number;
@@ -13,7 +19,6 @@ export class OwnWord {
   @Column()
   comment: string;
 
-  @ManyToOne(() => User, u => u.ownwords, { onDelete: "CASCADE" })
+  @ManyToOne(() => User, (u) => u.ownwords, { onDelete: 'CASCADE' })
   user: User;
-  
 }
