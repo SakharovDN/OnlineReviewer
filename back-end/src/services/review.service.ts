@@ -2,15 +2,16 @@ import {
   BadRequestException,
   Injectable,
   UnprocessableEntityException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from 'src/models/user.model';
 import { Repository } from 'typeorm';
 import { spawnSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
+import { TokenService } from './token.service';
+import { ReviewEvent } from 'src/models/review-event.model';
 const zip = require('express-zip');
-
 
 @Injectable()
 export class ReviewService {
@@ -18,10 +19,12 @@ export class ReviewService {
   readonly UPLOADS_PATH = '../uploads/';
 
   constructor(
-    @InjectRepository(User) private userRepository: Repository<User>,
+    @InjectRepository(ReviewEvent)
+    private reviewEventRepository: Repository<ReviewEvent>,
+    private tokenService: TokenService,
   ) {}
 
-  async Review(dto, docs): Promise<any> {
+  async Review(dto, docs, auth): Promise<any> {
     if (
       (dto.useGlobalDictionary != 'true' &&
         dto.useGlobalDictionary != 'false') ||
@@ -29,8 +32,14 @@ export class ReviewService {
     ) {
       throw new BadRequestException('Value is not boolean');
     }
-    // todo: достать userid для поиска своего словаря
-    const ownDictionaryPath = '';
+    if (auth) {
+      const token = auth.split(' ')[1];
+      try {
+        var user = this.tokenService.GetUserByAccessToken(token);
+      } catch {
+        throw new UnauthorizedException('You need authorization');
+      }
+    }
 
     let reviewResult = [];
     let filenames: string[] = [];
@@ -41,7 +50,7 @@ export class ReviewService {
         path.resolve(`${this.UPLOADS_PATH}${doc.filename}`),
         dto.useGlobalDictionary,
         dto.useOwnDictionary,
-        ownDictionaryPath,
+        user ? user.id : '',
       ]);
 
       if (review.error || review.stderr.toString()) {
@@ -60,7 +69,7 @@ export class ReviewService {
       filenames.push(doc.filename);
       originalnames.push(doc.originalname);
     });
-
+    this.WriteReviewEvent(user.email);
     return {
       link: `localhost:3000/home/getdocs/${filenames}/${originalnames}`,
       reviewResult,
@@ -87,6 +96,13 @@ export class ReviewService {
           fs.unlink(file.path, () => {});
         });
       }
+    });
+  }
+
+  private async WriteReviewEvent(email) {
+    this.reviewEventRepository.save({
+      email: email,
+      timestamp: new Date(),
     });
   }
 }

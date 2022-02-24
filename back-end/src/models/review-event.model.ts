@@ -10,7 +10,4 @@ export class ReviewEvent {
 
   @Column()
   timestamp: Date;
-
-  @Column({ default: false })
-  verified: boolean;
 }

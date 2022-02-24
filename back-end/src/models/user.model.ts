@@ -1,4 +1,6 @@
-import { PrimaryGeneratedColumn, Column, Entity } from 'typeorm';
+import { PrimaryGeneratedColumn, Column, Entity, OneToMany } from 'typeorm';
+import { OwnWord } from './own-word.model';
+
 export enum UserRole {
   ADMIN = 'admin',
   USER = 'user',
@@ -29,4 +31,8 @@ export class User {
 
   @Column({ nullable: true })
   pathDictionary: string;
+
+  @OneToMany(() => OwnWord, w => w.user, { cascade: true })
+  ownwords: OwnWord[];
+
 }

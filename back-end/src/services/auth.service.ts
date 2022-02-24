@@ -29,7 +29,7 @@ export class AuthService {
 
   async ConfirmEmail(id: string, res) {
     await this.userRepository.update(id, { verified: true });
-    return res.redirect('http://ya.ru');
+    return res.redirect('#');
   }
 
   async CreateUser(dto): Promise<any> {
@@ -61,6 +61,7 @@ export class AuthService {
     delete user.verified;
     const payload = {
       id: user.id,
+      role: user.role,
       email: user.email,
     };
     const RefreshToken = await this.tokenService.GenerateRefreshToken(payload);
@@ -75,6 +76,7 @@ export class AuthService {
   async UpdateAccessToken(user): Promise<UpdateTokenResponse> {
     const payload = {
       id: user.id,
+      role: user.role,
       email: user.email,
     };
 

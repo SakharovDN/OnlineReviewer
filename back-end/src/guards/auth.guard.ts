@@ -28,3 +28,15 @@ export class AuthRefreshTokenGuard implements CanActivate {
     );
   }
 }
+
+@Injectable()
+export class AdminAccessTokenGuard implements CanActivate {
+  constructor(private tokenService: TokenService) {}
+
+  canActivate(
+    context: ExecutionContext,
+  ): boolean | Promise<boolean> | Observable<boolean> {
+    const request = context.switchToHttp().getRequest();
+    return this.tokenService.VerifyAdminAccessToken(request);
+  }
+}
